@@ -5,6 +5,8 @@ VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Pong game", "Pong game.vcxproj", "{B5B852F0-9F3A-4967-928D-46F9D99A31CC}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PongClient", "..\PongClient\PongClient.vcxproj", "{094FADF1-5474-4F3F-8656-B9E0899A0CBD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{B5B852F0-9F3A-4967-928D-46F9D99A31CC}.Release|x64.Build.0 = Release|x64
 		{B5B852F0-9F3A-4967-928D-46F9D99A31CC}.Release|x86.ActiveCfg = Release|Win32
 		{B5B852F0-9F3A-4967-928D-46F9D99A31CC}.Release|x86.Build.0 = Release|Win32
+		{094FADF1-5474-4F3F-8656-B9E0899A0CBD}.Debug|x64.ActiveCfg = Debug|x64
+		{094FADF1-5474-4F3F-8656-B9E0899A0CBD}.Debug|x64.Build.0 = Debug|x64
+		{094FADF1-5474-4F3F-8656-B9E0899A0CBD}.Debug|x86.ActiveCfg = Debug|Win32
+		{094FADF1-5474-4F3F-8656-B9E0899A0CBD}.Debug|x86.Build.0 = Debug|Win32
+		{094FADF1-5474-4F3F-8656-B9E0899A0CBD}.Release|x64.ActiveCfg = Release|x64
+		{094FADF1-5474-4F3F-8656-B9E0899A0CBD}.Release|x64.Build.0 = Release|x64
+		{094FADF1-5474-4F3F-8656-B9E0899A0CBD}.Release|x86.ActiveCfg = Release|Win32
+		{094FADF1-5474-4F3F-8656-B9E0899A0CBD}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

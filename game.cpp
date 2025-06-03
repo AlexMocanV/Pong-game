@@ -4,13 +4,13 @@
 
 void Game::loadTextures() {
     if (!player1Texture.loadFromFile("textures/player.png")) {
-        std::cerr << "Failed to load player1 texture\n";
+        std::cerr << "SERVER Failed to load player1 texture\n";
     }
     if (!player2Texture.loadFromFile("textures/player.png")) {
-        std::cerr << "Failed to load player2 texture\n";
+        std::cerr << "SERVER Failed to load player2 texture\n";
     }
     if (!ballTexture.loadFromFile("textures/ball.png")) {
-        std::cerr << "Failed to load ball texture\n";
+        std::cerr << "SERVER Failed to load ball texture\n";
     }
     player1Sprite.setTexture(player1Texture);
     player2Sprite.setTexture(player2Texture);
@@ -55,12 +55,12 @@ void Game::checkCollision() {
     }
 }
 
-void Game::checkPlayer1Movement() {
+void Game::checkPlayer1Movement(float dt) {
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-        player1Sprite.move(0.0f, -0.15f); // Increased speed
+        player1Sprite.move(0.0f, -paddleSpeed * dt); // Increased speed
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-        player1Sprite.move(0.0f, 0.15f); // Increased speed
+        player1Sprite.move(0.0f, paddleSpeed * dt); // Increased speed
     }
     if (player1Sprite.getPosition().y < 0.0f) {
         player1Sprite.setPosition(player1Sprite.getPosition().x, 0.0f);
@@ -70,12 +70,12 @@ void Game::checkPlayer1Movement() {
     }
 }
 
-void Game::checkPlayer2Movement() {
+void Game::checkPlayer2Movement(float dt) {
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
-        player2Sprite.move(0.0f, -0.15f); // Increased speed
+        player2Sprite.move(0.0f,  -paddleSpeed * dt); // Increased speed
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
-        player2Sprite.move(0.0f, 0.15f); // Increased speed
+        player2Sprite.move(0.0f, paddleSpeed * dt); // Increased speed
     }
     if (player2Sprite.getPosition().y < 0.0f) {
         player2Sprite.setPosition(player2Sprite.getPosition().x, 0.0f);
@@ -84,40 +84,133 @@ void Game::checkPlayer2Movement() {
         player2Sprite.setPosition(player2Sprite.getPosition().x, 630.0f - player2Sprite.getGlobalBounds().height);
     }
 }
+void Game::serverSetup()
+{
+    if (listener.listen(53000) != sf::Socket::Done) {
+        std::cerr << "Error starting server\n";
+        return;
+    }
+    std::cout << "Server listening on port 53000\n";
+    if (listener.accept(networkSocket) != sf::Socket::Done) {
+        std::cerr << "Error accepting client\n";
+        return;
+    }
+    std::cout << "Client connected\n";
+}
+void Game::clientSetup()
+{
+    if (networkSocket.connect("127.0.0.1", 53000) != sf::Socket::Done) {
+        std::cerr << "Error connecting to server\n";
+        return;
+    }
+    std::cout << "Connected to server\n";
+}
+void Game::handleServer(float dt)
+{
+    // Handle local input for Player 1
+    checkPlayer1Movement(dt);
+
+    // Receive input from client for Player 2
+    sf::Packet packet;
+    if (networkSocket.receive(packet) == sf::Socket::Done) {
+        int input;
+        if (packet >> input) {
+            checkPlayer2Movement(dt);
+        }
+
+    }
+
+    // Update ball
+    ballSprite.move(ballSpeedX * dt, ballSpeedY * dt);
+    checkCollision();
+
+    // Send game state to client
+    sf::Packet statePacket;
+    statePacket << player1Sprite.getPosition().y << player2Sprite.getPosition().y
+        << ballSprite.getPosition().x << ballSprite.getPosition().y
+        << ballSpeedX << ballSpeedY
+        << player1Score << player2Score;
+    networkSocket.send(statePacket);
+}
+
+void Game::handleClient()
+{
+    int input = 0;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
+        input = 1;
+    }
+    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
+        input = 2;
+    }
+    sf::Packet inputPacket;
+    inputPacket << input;
+    networkSocket.send(inputPacket);
+
+    // Receive game state from server
+    sf::Packet statePacket;
+    if (networkSocket.receive(statePacket) == sf::Socket::Done) {
+        float p1y, p2y, bx, by, bdx, bdy;
+        int s1, s2;
+        if (statePacket >> p1y >> p2y >> bx >> by >> bdx >> bdy >> s1 >> s2) {
+            player1Sprite.setPosition(50.0f, p1y); // x is fixed
+            player2Sprite.setPosition(750.0f, p2y); // x is fixed
+            ballSprite.setPosition(bx, by);
+            ballSpeedX = bdx;
+            ballSpeedY = bdy;
+            player1Score = s1;
+            player2Score = s2;
+        }
+    }
+}
 
 void Game::run() {
-    // Load textures
     loadTextures();
     setPositions();
-    // Load font for score display
-    sf::Font font;
-    if (!font.loadFromFile("fonts/arial.ttf")) {
-        std::cerr << "Failed to load font\n";
-    }
-    sf::Text scoreText;
-    scoreText.setFont(font);
-    scoreText.setCharacterSize(24);
-    scoreText.setFillColor(sf::Color::White);
-    scoreText.setPosition(300.0f, 10.0f);
 
-    // Main game loop
-    sf::RenderWindow window(sf::VideoMode(800, 600), "Pong Game");
+    if (isServer) {
+        // Server setup
+        serverSetup();
+    }
+    else {
+        // Client setup
+        clientSetup();
+    }
+    networkSocket.setBlocking(false); // Non-blocking socket
+
+    sf::RenderWindow window(sf::VideoMode(800, 600), isServer ? "Pong Server" : "Pong Client");
+    sf::Clock clock;
+
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
         }
-        // Handle player input
-        checkPlayer1Movement();
-        checkPlayer2Movement();
-        // Check for collisions
-        checkCollision();
-        ballSprite.move(ballSpeedX, ballSpeedY);
-        // Update score display
-        scoreText.setString("Player 1: " + std::to_string(static_cast<int>(player1Score)) +
-            "  Player 2: " + std::to_string(static_cast<int>(player2Score)));
-        window.clear();
+
+        float dt = clock.restart().asSeconds();
+
+        if (isServer) {
+            handleServer(dt);
+        }
+        else {
+            // Client: Send input for Player 2
+            handleClient();
+        }
+
+        sf::Font font;
+        if (!font.loadFromFile("fonts/arial.ttf")) {
+            std::cerr << "Failed to load font\n";
+        }
+
+        sf::Text scoreText;
+        scoreText.setFont(font);
+        scoreText.setCharacterSize(24);
+        scoreText.setFillColor(sf::Color::White);
+        scoreText.setPosition(300.0f, 10.0f);
+        scoreText.setString("Player 1: " + std::to_string(player1Score) + "  Player 2: " + std::to_string(player2Score));
+        // Render
+		//move ball and paddles
+	    window.clear();
         window.draw(player1Sprite);
         window.draw(player2Sprite);
         window.draw(ballSprite);
