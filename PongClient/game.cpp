@@ -4,13 +4,13 @@
 
 void Game::loadTextures() {
     if (!player1Texture.loadFromFile("textures/player.png")) {
-        std::cerr << "CLIENT Failed to load player1 texture\n";
+        std::cerr << "SERVER Failed to load player1 texture\n";
     }
     if (!player2Texture.loadFromFile("textures/player.png")) {
-        std::cerr << "CLIENT Failed to load player2 texture\n";
+        std::cerr << "SERVER Failed to load player2 texture\n";
     }
     if (!ballTexture.loadFromFile("textures/ball.png")) {
-        std::cerr << "CLIENT Failed to load ball texture\n";
+        std::cerr << "SERVER Failed to load ball texture\n";
     }
     player1Sprite.setTexture(player1Texture);
     player2Sprite.setTexture(player2Texture);
@@ -33,21 +33,26 @@ void Game::setPositions() {
 void Game::checkCollision() {
     // Ball collision with paddles
     if (ballSprite.getGlobalBounds().intersects(player1Sprite.getGlobalBounds())) {
-        ballSpeedX = std::abs(ballSpeedX); // Ball moves right after hitting player 1
+        ballSpeedX = std::abs(ballSpeedX) + 0.15f * std::abs(ballSpeedX);
+        paddleSpeed = paddleSpeed + 0.15f * paddleSpeed;// Ball moves right after hitting player 1
     }
     if (ballSprite.getGlobalBounds().intersects(player2Sprite.getGlobalBounds())) {
-        ballSpeedX = -std::abs(ballSpeedX); // Ball moves left after hitting player 2
+        ballSpeedX = -std::abs(ballSpeedX) - 0.15f * std::abs(ballSpeedX);
+        paddleSpeed = paddleSpeed + 0.15f * paddleSpeed;
+        // Ball moves left after hitting player 2
     }
     // Ball out of bounds
     if (ballSprite.getPosition().x < 0.0f) {
         player2Score++;
         ballSprite.setPosition(400.0f, 300.0f); // Reset ball to center
-        ballSpeedX = std::abs(ballSpeedX); // Start moving right
+        ballSpeedX = std::abs(initalBallSpeedX); // Start moving right
+        paddleSpeed = initialPaddleSpeed;
     }
     if (ballSprite.getPosition().x > 800.0f) {
         player1Score++;
         ballSprite.setPosition(400.0f, 300.0f); // Reset ball to center
-        ballSpeedX = -std::abs(ballSpeedX); // Start moving left
+        ballSpeedX = -std::abs(initalBallSpeedy);// Start moving left
+        paddleSpeed = initialPaddleSpeed;
     }
     // Bounce off top and bottom
     if (ballSprite.getPosition().y < 0.0f || ballSprite.getPosition().y > 600.0f) {
@@ -72,7 +77,7 @@ void Game::checkPlayer1Movement(float dt) {
 
 void Game::checkPlayer2Movement(float dt) {
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
-        player2Sprite.move(0.0f,  -paddleSpeed * dt); // Increased speed
+        player2Sprite.move(0.0f, -paddleSpeed * dt); // Increased speed
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
         player2Sprite.move(0.0f, paddleSpeed * dt); // Increased speed
@@ -84,36 +89,6 @@ void Game::checkPlayer2Movement(float dt) {
         player2Sprite.setPosition(player2Sprite.getPosition().x, 630.0f - player2Sprite.getGlobalBounds().height);
     }
 }
-void Game::handleClient()
-{
-    int input = 0;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
-        input = 1;
-    }
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
-        input = 2;
-    }
-    sf::Packet inputPacket;
-    inputPacket << input;
-    networkSocket.send(inputPacket);
-
-    // Receive game state from server
-    sf::Packet statePacket;
-    if (networkSocket.receive(statePacket) == sf::Socket::Done) {
-        float p1y, p2y, bx, by, bsdx, bsdy;
-        int s1, s2;
-        if (statePacket >> p1y >> p2y >> bx >> by >> bsdx >> bsdy >> s1 >> s2) {
-            player1Sprite.setPosition(50.0f, p1y); // x is fixed
-            player2Sprite.setPosition(750.0f, p2y); // x is fixed
-            ballSprite.setPosition(bx, by);
-            ballSpeedX = bsdx;
-            ballSpeedY = bsdy;
-            player1Score = s1;
-            player2Score = s2;
-        }
-    }
-}
-
 void Game::serverSetup()
 {
     if (listener.listen(53000) != sf::Socket::Done) {
@@ -147,6 +122,7 @@ void Game::handleServer(float dt)
         if (packet >> input) {
             checkPlayer2Movement(dt);
         }
+
     }
 
     // Update ball
@@ -161,6 +137,37 @@ void Game::handleServer(float dt)
         << player1Score << player2Score;
     networkSocket.send(statePacket);
 }
+
+void Game::handleClient()
+{
+    int input = 0;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
+        input = 1;
+    }
+    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
+        input = 2;
+    }
+    sf::Packet inputPacket;
+    inputPacket << input;
+    networkSocket.send(inputPacket);
+
+    // Receive game state from server
+    sf::Packet statePacket;
+    if (networkSocket.receive(statePacket) == sf::Socket::Done) {
+        float p1y, p2y, bx, by, bdx, bdy;
+        int s1, s2;
+        if (statePacket >> p1y >> p2y >> bx >> by >> bdx >> bdy >> s1 >> s2) {
+            player1Sprite.setPosition(50.0f, p1y); // x is fixed
+            player2Sprite.setPosition(750.0f, p2y); // x is fixed
+            ballSprite.setPosition(bx, by);
+            ballSpeedX = bdx;
+            ballSpeedY = bdy;
+            player1Score = s1;
+            player2Score = s2;
+        }
+    }
+}
+
 void Game::run() {
     loadTextures();
     setPositions();
@@ -207,7 +214,7 @@ void Game::run() {
         scoreText.setPosition(300.0f, 10.0f);
         scoreText.setString("Player 1: " + std::to_string(player1Score) + "  Player 2: " + std::to_string(player2Score));
         // Render
-
+        //move ball and paddles
         window.clear();
         window.draw(player1Sprite);
         window.draw(player2Sprite);

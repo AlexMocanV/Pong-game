@@ -33,21 +33,25 @@ void Game::setPositions() {
 void Game::checkCollision() {
     // Ball collision with paddles
     if (ballSprite.getGlobalBounds().intersects(player1Sprite.getGlobalBounds())) {
-        ballSpeedX = std::abs(ballSpeedX); // Ball moves right after hitting player 1
+        ballSpeedX = std::abs(ballSpeedX) + 0.15f * std::abs(ballSpeedX);
+        paddleSpeed = paddleSpeed + 0.15f * paddleSpeed;// Ball moves right after hitting player 1
     }
     if (ballSprite.getGlobalBounds().intersects(player2Sprite.getGlobalBounds())) {
-        ballSpeedX = -std::abs(ballSpeedX); // Ball moves left after hitting player 2
+        ballSpeedX = -std::abs(ballSpeedX) - 0.15f * std::abs(ballSpeedX);
+        paddleSpeed = paddleSpeed + 0.15f * paddleSpeed;// Ball moves left after hitting player 2
     }
     // Ball out of bounds
     if (ballSprite.getPosition().x < 0.0f) {
         player2Score++;
         ballSprite.setPosition(400.0f, 300.0f); // Reset ball to center
-        ballSpeedX = std::abs(ballSpeedX); // Start moving right
+        ballSpeedX = std::abs(initalBallSpeedX); // Start moving right
+        paddleSpeed = initialPaddleSpeed;
     }
     if (ballSprite.getPosition().x > 800.0f) {
         player1Score++;
         ballSprite.setPosition(400.0f, 300.0f); // Reset ball to center
-        ballSpeedX = -std::abs(ballSpeedX); // Start moving left
+        ballSpeedX = -std::abs(initalBallSpeedy);// Start moving left
+        paddleSpeed = initialPaddleSpeed;
     }
     // Bounce off top and bottom
     if (ballSprite.getPosition().y < 0.0f || ballSprite.getPosition().y > 600.0f) {
