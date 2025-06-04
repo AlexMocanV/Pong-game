@@ -103,7 +103,7 @@ void Game::serverSetup()
 }
 void Game::clientSetup()
 {
-    if (networkSocket.connect("172.31.80.1", 141) != sf::Socket::Done) {
+    if (networkSocket.connect("26.134.209.218", 141) != sf::Socket::Done) {
         std::cerr << "Error connecting to server\n";
         return;
     }
