@@ -91,11 +91,11 @@ void Game::checkPlayer2Movement(float dt) {
 }
 void Game::serverSetup()
 {
-    if (listener.listen(53000) != sf::Socket::Done) {
+    if (listener.listen(141) != sf::Socket::Done) {
         std::cerr << "Error starting server\n";
         return;
     }
-    std::cout << "Server listening on port 53000\n";
+    std::cout << "Server listening on port 141\n";
     if (listener.accept(networkSocket) != sf::Socket::Done) {
         std::cerr << "Error accepting client\n";
         return;
@@ -104,7 +104,7 @@ void Game::serverSetup()
 }
 void Game::clientSetup()
 {
-    if (networkSocket.connect("127.0.0.1", 53000) != sf::Socket::Done) {
+    if (networkSocket.connect("172.31.80.1", 141) != sf::Socket::Done) {
         std::cerr << "Error connecting to server\n";
         return;
     }
