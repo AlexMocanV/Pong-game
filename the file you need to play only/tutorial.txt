@@ -1,4 +1,4 @@
-in order to play pong with your friend you both have to have this folder with these files OTHERWISE IT WONT WORK.
+in order to play pong with your friend you both have to have this folder with these files tou also have to use a vpn OTHERWISE IT WONT WORK.
 one should first open the Pong game.exe and only then the other may open the Pong Client.exe in order to work
 for the player with the server (player 1) you move with W/S
 for the player with the client (player 2) you move with arrow up/ arrow down

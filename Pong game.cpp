@@ -3,7 +3,13 @@
 #include <SFML\Network.hpp>
 int main()
 {
-    Game game(true);
+	std::cout << "Enter server ip:\n" << std::endl;
+	std::string ip;
+	std::getline(std::cin, ip);
+	std::cout << "Enter ip port:\n" << std::endl;
+	int port = 0;
+	std::cin >> port;
+    Game game(true, ip, port);
     game.run();
 	
 	return 0;
