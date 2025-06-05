@@ -74,11 +74,11 @@ void Game::checkPlayer1Movement(float dt) {
     }
 }
 
-void Game::checkPlayer2Movement(float dt) {
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
+void Game::checkPlayer2Movement(float dt, int input) {
+    if (input == 1) {
         player2Sprite.move(0.0f,  -paddleSpeed * dt); // Increased speed
     }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
+    if (input == 2) {
         player2Sprite.move(0.0f, paddleSpeed * dt); // Increased speed
     }
     if (player2Sprite.getPosition().y < 0.0f) {
@@ -119,9 +119,8 @@ void Game::handleServer(float dt)
     if (networkSocket.receive(packet) == sf::Socket::Done) {
         int input;
         if (packet >> input) {
-            checkPlayer2Movement(dt);
+            checkPlayer2Movement(dt, input);
         }
-
     }
 
     // Update ball
